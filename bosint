@@ -1,0 +1,287 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+# ##################################################
+import pyperclip
+import webbrowser
+import logging
+import argparse
+import time
+import os
+import sys
+from tqdm import tqdm
+from subprocess import check_output
+scriptname = "bosint"
+print('''
+                 .:odxxddl:,.              
+               'lxOkol::;;,,,'.            
+            ,xXWKOkOKXXXX0xl;.             
+          .dNMMMMMWXOdooooddxdc;.          
+         ,OWMMWXkl;.           ..          
+        cXMWKd:.                           
+      .oNMWk'                         ..   
+     .dNMWx.                          'd:  
+    .xWMWx.                           .xK; 
+   .dWMWk.                             dW0,
+   :XMMK;   .                     .    dWMO
+   :XMM0'  .oo'....';:;,'.......'c;   .xMWk
+   .oNMX;  .dNNK0KXNWMk:'...'',,...   ,KMO'
+    .oNWd.  'OWMMMMMMMx,.            .dWO' 
+      cKK;   ,0MMMMMMMx,.            cKk'  
+       ,Ox'   ;0MMMMMMx,.          .:Od.   
+        .okd,  ;KMMMMMx'.        .oOkc     
+          :O0:  ,xKWMWd..       .xKx'      
+           .ckl.  .,:c'        ,xx,        bosint"
+             .::.            .;c,          by breachr"
+
+'''
+)
+# ##################################################
+# Imports
+#
+# ##################################################
+# Arg Parser
+parser = argparse.ArgumentParser(description=scriptname, epilog='')
+parser.add_argument('-c', '--company', action='store_true')
+parser.add_argument('-d', '--domain', action='store_true')
+parser.add_argument('-e', '--email', action='store_true')
+parser.add_argument('-i', '--ip', action='store_true')
+parser.add_argument('-p', '--person', action='store_true')
+parser.add_argument('-h', '--http', action='store_true')
+parser.add_argument('-s', '--site', action='store_true')
+parser.add_argument('-t', '--telephone', action='store_true')
+parser.add_argument('Single')
+args = vars(parser.parse_args())
+target = args["Single"]
+# ##################################################
+
+
+def main_script():
+    # webbrowser.open_new("breachr.net")
+    open = webbrowser.open_new_tab
+    pyperclip.copy(args['Single'])
+
+    if args['company']:
+        queries = q_company
+    elif args['domain']:
+        queries = q_domain
+    elif args['email']:
+        queries = q_email
+    elif args['http']:
+        queries = q_http
+    elif args['ip']:
+        queries = q_ip
+    elif args['person']:
+        queries = q_person
+    elif args['site']:
+        queries = q_site
+    elif args['telephone']:
+        queries = q_telephone
+
+    else:
+        print("no type given: \n\
+            -c company \n\
+            -d domain \n\
+            -h http \n\
+            -e email \n\
+            -i ip \n\
+            -p person \n\
+            -s site \n\
+            -t telephone")
+        exit()
+
+    for query in tqdm(queries):
+        open(query)
+        time.sleep(0.5)
+    
+    if args['domain']:
+        print("Running theHarvester...")
+        print(check_output("theHarvester -r -n -c -d " + args['domain'], shell="/bin/bash").decode("UTF-8"))
+        print(check_output("dnsrecon -t axfr -d " + args['domain'], shell="/bin/bash").decode("UTF-8"))
+        print(check_output("dnsrecon -d " + args['domain'], shell="/bin/bash").decode("UTF-8"))
+    print("Target copied to Clipboard")
+
+
+# ##################################################
+# ! Company
+q_company = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.shodan.io/search?query=org:' + target,  # Needs login
+    'https://www.social-searcher.com/social-buzz/?q5=' + target,
+    'https://www.social-searcher.com/search-users/?ntw=&q6=' + target,
+    'https://www.northdata.de/' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Needs login
+    "https://www.google.com/search?q=site:linkedin.com+employees+" + target,
+    'https://github.com/search?q=' + target,
+    'https://pentest-tools.com/information-gathering/find-domains-owned-by-company',
+    'https://www.crunchbase.com/organization/' + target,
+    # RevDNS
+    'https://viewdns.info/reversewhois/?q=' + target,
+    'https://domaineye.com/reverse-whois/',
+    # Archive
+    'https://web.archive.org/web/*/' + target,
+    # Job Listings
+    'https://www.linkedin.com/jobs/search/?keywords=' + target,
+    'https://www.kununu.com/de/search#/?country=COUNTRY_DE&q=' + target,
+    'https://de.indeed.com/Jobs?q=' + target,
+    'https://www.monster.com/jobs/search/?q=' + target,
+    # Search Engines
+    'https://millionshort.com/search?remove=0&shopping=&country=DE&keywords=' + \
+    target,  # Captcha solving does not help
+    # Location
+    'https://www.google.com/maps/search/' + target,
+    'https://twitter.com/search?q=' + target,
+]
+
+# ! Website
+q_http = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    # Search Power
+    "https://www.ssllabs.com/ssltest/",
+    "https://sitecheck.sucuri.net/",
+    # "https://securityheaders.com/",       # Done with FF Ext
+    # "https://gf.dev/secure-cookie-test",  # Dont with FF Ext
+    'https://urlscan.io/',
+    'https://www.shodan.io/search?query=' + target,
+    'https://spyse.com/target/domain/' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,
+]
+
+# ! Domain
+gbase = "https://www.google.com/search?q=site:" + target + "+"
+q_domain = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    # Search Power
+    'https://dnsdumpster.com/',
+    'https://phonebook.cz/',
+    'https://urlscan.io/',
+    'https://centralops.net/co/',
+    'https://anymailfinder.com/',
+    'https://viewdns.info/dnsreport/?domain=' + target,
+    'https://viewdns.info/iphistory/?domain=' + target,
+    'http://dnshistory.org/dns-records/' + target,
+    'https://www.shodan.io/search?query=' + target,
+    'https://spyse.com/target/domain/' + target,  # Down
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://crt.sh/?q=' + target,
+    'https://viewdns.info/dnsrecord/?domain=' + target,
+    'https://community.riskiq.com/research?query=' + target,  # Login necessary
+    'https://who.is/whois/' + target,
+    'https://pentest-tools.com/information-gathering/find-subdomains-of-domain',
+    'https://hunter.io/search/' + target,  # daily limit
+    'https://rapiddns.io/subdomain/' + target,
+    'https://searchdns.netcraft.com/?restriction=site+contains&position=limited&host=' + \
+    target,  # Doesn't seem to work
+    'https://urlquery.net',
+    # RevDNS
+    'https://viewdns.info/reversewhois/?q=' + target,
+    # Pastebin
+    'https://www.google.com/search?q=site:pastebin.com+' + target,
+    # SubDomains
+    "https://" + target,
+    "https://www." + target,
+    "https://mail." + target,
+    "https://www.google.com/search?q=site:*." + target + " -www",
+    "https://www.google.com/search?q=site:*.*." + target + " -www",
+    # Location
+    'https://www.google.com/maps/search/' + target,
+    # Google Dorks
+    gbase + "-ext:html",
+    gbase + "username+|+password+|+login+|+root+|+admin",
+    gbase + 'intitle:"index+of"+|+intext:"index+of+/"+|+intext:"parent+directory"',
+    gbase + "inurl:login+|+inurl:admin+|+inurl:user+|+inurl:cpanel+|+inurl:account+|+inurl:moderator+|+inurl:/cp",
+    gbase + "inurl:shell+|+inurl:backdoor+|+inurl:wso+|+inurl:cmd+|+shadow+|+passwd+|+boot.ini+|+inurl:backdoor",
+    gbase + "inurl:readme+|+inurl:license+|+inurl:install+|+inurl:setup+|+inurl:config",
+    gbase + "inurl:plugin+|+inurl:upload+|+inurl:download",
+    gbase + "inurl:email+|+inurl:wp-",
+    gbase + "inurl:redir+|+inurl:url+|+inurl:redirect+|+inurl:return+|+inurl:Fsrc=http+|+inurl:r=http",
+    gbase + "ext:pdf",
+    gbase + "ext:cgi+|+ext:php+|+ext:asp+|+ext:aspx+|+ext:jsp+|+ext:jspx+|+ext:swf+|+ext:fla+|+ext:xml",
+    gbase + "ext:csv+|+ext:txt+|+ext:bak",
+    gbase + "ext:action+|+struts",
+    gbase + "ext:sql+|+ext:dbf+|+ext:mdb+|+ext:log+|ext:env",
+    gbase + "ext:bkf+|+ext:bkp+|+ext:bak+|+ext:old+|+ext:backup",
+    gbase + "ext:doc+|+ext:docx+|+ext:odt+|+ext:rtf+|+ext:sxw+|+ext:psw+|+ext:ppt+|+ext:pptx+|+ext:pps+|+ext:csv",
+    gbase + "ext:xlsx+|+ext:xls+|+ext:xlsb+|+ext:xlsm",
+    gbase + 'ext:php+intitle:phpinfo+"published+by+the+PHP+Group"',
+    gbase + 'intext:"sql+syntax+near"+|+intext:"syntax+error+has+occurred"+|+intext:"incorrect+syntax+near"+|+intext:"unexpected+end+of+SQL+command"+|+intext:"Warning:+mysql_connect()"+|+intext:"Warning:+mysql_query()"+|+intext:"Warning:+pg_connect()"',
+]
+
+# ! IP
+q_ip = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.shodan.io/search?query=' + target,
+    'https://dnsdumpster.com/',
+    #'https://mxtoolbox.com/SuperTool.aspx?run=toolpage&action=ptr:' +target,
+    #'https://www.robtex.com/ip-lookup/' +target,
+    #'https://apps.db.ripe.net/db-web-ui/query?searchtext=' +target,
+    #'https://viewdns.info/reverseip/?host=' +target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://centralops.net/co/',
+    'https://community.riskiq.com/research?query=' + target,  # Login necessary
+    'https://viewdns.info/spamdblookup/?ip=' + target,
+    'http://ptrarchive.com/tools/lookup2.htm?ip=' + target,
+    'https://viewdns.info/reversedns/?ip=' + target,
+    'https://dnslytics.com/reverse-ip',
+    'https://hackertarget.com/reverse-ip-lookup/',
+]
+
+# ! Email
+q_email = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://haveibeenpwned.com/'
+    'https://community.riskiq.com/research?query=' + target,
+    'https://viewdns.info/reversewhois/?q=' + target,
+]
+
+# ! Person
+q_person = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.social-searcher.com/search-users/?ntw=&q6=' + target,
+    'https://www.northdata.de/' + target,
+    'https://viewdns.info/reversewhois/?q=' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://app.voilanorbert.com/#/prospecting/manual' + target,  # Login necessary
+    'https://www.idcrawl.com' + target,
+    'http://www.uvrx.com/social.html',
+    # Social Media
+    'https://www.facebook.com/search/top/?q=' + target,  # Broken
+    'https://www.linkedin.com/search/results/all/?keywords=' + target,  # Login necessary
+    'https://www.xing.com/search/members?keywords=' + target,  # Login necessary
+    'https://www.instagram.com/' + target,  # Broken
+    'https://www.truthfinder.com/'  # US only
+]
+
+# ! Site
+q_site = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://www.google.com/maps/search/' + target,
+]
+
+# ! Telephone
+q_telephone = [
+    'https://www.google.com/search?q=' + target,
+    'https://duckduckgo.com/?q=' + target,
+    'https://www.bing.com/search?q' + target,
+    'https://www.zoomeye.org/searchResult?q=' + target,  # Login necessary
+    'https://haveibeenpwned.com/' + target,  # Broken
+]
+
+# ##################################################
+if __name__ == "__main__":
+    main_script()
